@@ -4,14 +4,13 @@
 import os
 import datetime
 from venv import create
-from xmlrpc.client import DateTime
 from flask_restx import Resource,Namespace,fields
 from flask import request ,jsonify,Flask
-from .models import Book,UrlPath
+from .models import Book, Framework,UrlPath,UserModel
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
 from http import HTTPStatus
-from flask import abort
+from flask import abort,jsonify
 from datetime import datetime
 
 
@@ -32,10 +31,51 @@ book_model=book.model(
         "title":fields.String(),
         "author":fields.String(),
         "description":fields.String(),
-        "user_id":fields.Integer(),
         "create":fields.DateTime()
     }
 )
+
+#book model  marshallow
+framework_model=book.model(
+    "Framework",{
+        "id":fields.Integer(),
+        "name":fields.String(),
+        "description":fields.String(),
+        "date_creat_at":fields.DateTime()
+    }
+)
+"""
+username=db.Column(db.String(50),nullable=False,unique=True)
+    email=db.Column(db.String(100),nullable=False,unique=True)
+    password=db.Column(db.String(200),nullable=False)
+    create_at=db.Column(db.DateTime(),default=datetime.utcnow())
+    books = db.relationship('Book',backref='book', lazy=True)
+    frameworks =db.relationship('Framework', lazy='select',
+        backref=db.backref('framework', lazy='joined'))
+    images = db.relationship('UrlPath',backref='image', lazy=True)
+    user_model=book.model(
+    "UserModel",{
+        "id":fields.Integer(),
+        "email":fields.String(),
+        "password":fields.String(),
+        "create_at":fields.DateTime(),
+        "books":fields.List([]),
+        "frameworks":fields.String(),
+        "images":fields.String()
+    }
+)
+
+"""
+
+user_model=book.model(
+    "UserModel",{
+        "id":fields.Integer(),
+        "email":fields.String(),
+        "password":fields.String(),
+        "create_at":fields.DateTime(),
+        "books":fields.List(fields.Nested(book_model,),),
+        "frameworks":fields.List(fields.Nested(framework_model,))
+    })
 
 @book.route("/")
 class BooksView(Resource):
@@ -55,6 +95,24 @@ class BooksView(Resource):
         )
         newbook.save()
         return newbook
+
+@book.route("/users")
+class UserView(Resource):
+    @book.marshal_list_with(user_model,code=200,envelope="users")
+    def get(self):
+         user=UserModel.query.all()
+         return user
+     
+
+@book.route("/users/<int:id>")
+class GetUser(Resource):
+    @book.marshal_with(user_model,code=200)
+    def get(self,id):
+        user=UserModel.query.filter_by(id=id).first()
+        if user is None:
+            abort(401,"user not found")
+        return user
+
 
 
 @book.route("/<int:id>")
