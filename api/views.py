@@ -64,8 +64,22 @@ username=db.Column(db.String(50),nullable=False,unique=True)
         "images":fields.String()
     }
 )
+class UrlPath(db.Model):
+    __tablename__="images"
+    id=db.Column(db.Integer(),primary_key=True)
+    file_name=db.Column(db.String(100),nullable=False,unique=True)
+    url_name=db.Column(db.String(200),nullable=False,)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'),
+        nullable=False)
 
 """
+url_model=book.model(
+    "UrlPath",{
+        "id":fields.Integer(),
+        "file_name":fields.String(),
+        "url_name":fields.Url("images")
+    }
+)
 
 user_model=book.model(
     "UserModel",{
@@ -74,8 +88,11 @@ user_model=book.model(
         "password":fields.String(),
         "create_at":fields.DateTime(),
         "books":fields.List(fields.Nested(book_model,),),
-        "frameworks":fields.List(fields.Nested(framework_model,))
+        "frameworks":fields.List(fields.Nested(framework_model,)),
+        "images":fields.List(fields.Nested(url_model))
     })
+
+
 
 @book.route("/")
 class BooksView(Resource):
@@ -96,7 +113,7 @@ class BooksView(Resource):
         newbook.save()
         return newbook
 
-@book.route("/users")
+@book.route("/users",)
 class UserView(Resource):
     @book.marshal_list_with(user_model,code=200,envelope="users")
     def get(self):
@@ -112,6 +129,15 @@ class GetUser(Resource):
         if user is None:
             abort(401,"user not found")
         return user
+
+@book.route("/images",endpoint='images')
+class GetImages(Resource):
+    @book.marshal_with(url_model,code=200,envelope="images")
+    def get(self):
+        images=UrlPath.query.all()
+        if images is None:
+            abort(401,"images not found")
+        return images
 
 
 
@@ -168,5 +194,14 @@ class Upload(Resource):
             filesave.save()
             file.save(os.path.join("/Users/aminemejri/Desktop/Apiflask/api/upload", filename))
         return jsonify(message="file upload witth success",url=url)
-
+    
+    
+@book.route('/uploads/<filename>')
+class Download(Resource):
+    def get(self,filename):
+        urlimage=UrlPath.query.filter_by(file_name=filename).first()
+        if urlimage is None:
+            abort(401,f"file not founded")
+        return send_from_directory("upload",
+                               filename)
 
