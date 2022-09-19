@@ -19,7 +19,11 @@ class DevConfig(Config):
 
 
 class ProdConfig(Config):
-    pass
+    DEBUG=False
+    SQLALCHEMY_ECHO=False
+    SQLALCHEMY_DATABASE_URI=os.getenv("SQLALCHEMY_DATABASE_URI")
+    SECRET_KEY=os.getenv("SECRET_KEY")
+    MAX_CONTENT_LENGTH=16 * 1000 * 1000
 
 
 config_dict={

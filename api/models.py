@@ -21,10 +21,10 @@ class UserModel(db.Model): #  class UserModel extends db.Model{il va nous fourni
     email=db.Column(db.String(100),nullable=False,unique=True)
     password=db.Column(db.String(200),nullable=False)
     create_at=db.Column(db.DateTime(),default=datetime.utcnow())
-    books = db.relationship('Book',backref='book', lazy="dynamic")
-    frameworks =db.relationship('Framework', lazy='dynamic',
+    books = db.relationship('Book',backref='book', lazy="dynamic",cascade= "all, delete")
+    frameworks =db.relationship('Framework', lazy='dynamic',cascade= "all, delete",
         backref='framework',)
-    images = db.relationship('UrlPath',backref='image', lazy="dynamic")
+    images = db.relationship('UrlPath',backref='image', cascade= "all, delete",lazy="dynamic")
 
     def __repr__(self):
         return f"user {self.username}"
